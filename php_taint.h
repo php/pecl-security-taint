@@ -118,6 +118,20 @@ PHP_FUNCTION(taint);
 PHP_FUNCTION(untaint);
 PHP_FUNCTION(is_tainted);
 
+PHP_FUNCTION(taint_strval);
+PHP_FUNCTION(taint_sprintf);
+PHP_FUNCTION(taint_vsprintf);
+PHP_FUNCTION(taint_explode);
+PHP_FUNCTION(taint_implode);
+
+extern PHP_FUNCTION(strval);
+extern PHP_FUNCTION(user_sprintf);
+extern PHP_FUNCTION(vsprintf);
+extern PHP_FUNCTION(explode);
+extern PHP_FUNCTION(implode);
+
+typedef void (*php_func)(INTERNAL_FUNCTION_PARAMETERS);
+
 ZEND_BEGIN_MODULE_GLOBALS(taint)
 	zend_bool enable;
 	int       error_level;
