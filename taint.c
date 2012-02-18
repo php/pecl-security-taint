@@ -1513,7 +1513,7 @@ PHP_FUNCTION(taint_explode) {
 	PHP_FN(explode)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
 	if (tainted && IS_ARRAY == Z_TYPE_P(return_value) && zend_hash_num_elements(Z_ARRVAL_P(return_value))) {
-		php_taint_mark_strings(return_value);
+		php_taint_mark_strings(return_value TSRMLS_CC);
 	}
 }
 /* }}} */
