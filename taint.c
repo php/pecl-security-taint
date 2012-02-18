@@ -1083,8 +1083,8 @@ static int php_taint_do_fcall_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 #if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 3) 
 	zend_function *old_func = EG(function_state_ptr)->function;
 	if (zend_hash_find(EG(function_table), fname->value.str.val, fname->value.str.len+1, (void **)&EG(function_state_ptr)->function) == SUCCESS) {
-		if (EG(function_state_ptr)->function.common.scope) {
-			zend_class_entry *scope = EG(function_state_ptr)->function.common.scope;
+		if (EG(function_state_ptr)->function->common.scope) {
+			zend_class_entry *scope = EG(function_state_ptr)->function->common.scope;
 			php_taint_mcall_check(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU, opline, scope, Z_STRVAL_P(fname), Z_STRLEN_P(fname));
 		} else {
 			php_taint_fcall_check(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU, opline, Z_STRVAL_P(fname), Z_STRLEN_P(fname));
@@ -1285,7 +1285,7 @@ static int php_taint_send_var_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval **op1 = NULL, **op2 = NULL;
 	if ((opline->extended_value == ZEND_DO_FCALL_BY_NAME)
-			&& ARG_SHOULD_BE_SENT_BY_REF(execute_data->fbc, opline->op2.opline_num)) {
+			&& ARG_SHOULD_BE_SENT_BY_REF(execute_data->fbc, TAINT_OP_LINENUM(opline->op2))) {
 		return php_taint_send_ref_handler(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 	}
 

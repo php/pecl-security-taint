@@ -53,9 +53,7 @@ extern zend_module_entry taint_module_entry;
 #  define TAINT_OP2_CONSTANT_PTR(n) (&(n)->op2.u.constant)
 #  define TAINT_GET_ZVAL_PTR_CV_2ND_ARG(t) (execute_data->Ts)
 #  define TAINT_RETURN_VALUE_USED(n) (!((&(n)->result)->u.EA.type & EXT_TYPE_UNUSED))
-#  ifndef Z_SET_ISREF_PP
-#    define Z_SET_ISREF_PP(n) ((*n)->is_ref = 1)
-#  endif
+#  define TAINT_OP_LINENUM(n)       ((n).u.opline_num)
 #else
 #  define TAINT_OP1_TYPE(n)         ((n)->op1_type)
 #  define TAINT_OP2_TYPE(n)         ((n)->op2_type)
@@ -68,6 +66,17 @@ extern zend_module_entry taint_module_entry;
 #  define TAINT_OP2_CONSTANT_PTR(n) ((n)->op2.zv)
 #  define TAINT_GET_ZVAL_PTR_CV_2ND_ARG(t) (t)
 #  define TAINT_RETURN_VALUE_USED(n) (!((n)->result_type & EXT_TYPE_UNUSED))
+#  define TAINT_OP_LINENUM(n)       ((n).opline_num)
+#endif
+
+#ifndef Z_SET_ISREF_PP
+#  define Z_SET_ISREF_PP(n) ((*n)->is_ref = 1)
+#endif
+#ifndef Z_UNSET_ISREF_PP
+#  define Z_UNSET_ISREF_PP(n)  ((*n)->is_ref = 0)
+#endif
+#ifndef Z_REFCOUNT_PP
+#  define Z_REFCOUNT_PP(n)  ((*n)->refcount)
 #endif
 
 #define TAINT_T(offset) (*(temp_variable *)((char *) execute_data->Ts + offset))
