@@ -1153,7 +1153,7 @@ static int php_taint_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 				}
 			}
 			break;
-		defaut:
+		default:
 			return ZEND_USER_OPCODE_DISPATCH;
 			break;
 	}
