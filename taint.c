@@ -630,6 +630,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	switch (TAINT_OP2_TYPE(opline)) {
 		case IS_TMP_VAR:
 			zval_dtor(free_op2.var);
+			break;
 		case IS_VAR:
 			if (free_op2.var) {
 				zval_ptr_dtor(&free_op2.var);
