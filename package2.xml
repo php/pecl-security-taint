@@ -23,11 +23,11 @@
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
    - Support trim/rtrim/ltrim
-   - Dosen't depend on exposing of zif_* symbols any more
+   - Doesn't depend on exposing of zif_* symbols any more
    - Fixed a potential crash(PHP 5.2)
-   - Fixed bug that concat_assign lost tainted info in php 5.4(if the var_ptr is tainted while value is not)
-   - Fix memory leak in assign_concat
-   - Fix tests faild of sprintf/trim etc args signature
+   - Fixed bug that concat_assign lost tainted info(PHP 5.4, if the var_ptr is tainted while value is not)
+   - Fixed memory leak in assign_concat
+   - Fixed tests faild of sprintf/trim etc args signature
    - Fixed compiler warnings
  </notes>
  <contents> 
