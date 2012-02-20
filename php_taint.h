@@ -123,12 +123,9 @@ PHP_FUNCTION(taint_sprintf);
 PHP_FUNCTION(taint_vsprintf);
 PHP_FUNCTION(taint_explode);
 PHP_FUNCTION(taint_implode);
-
-extern PHP_FUNCTION(strval);
-extern PHP_FUNCTION(user_sprintf);
-extern PHP_FUNCTION(vsprintf);
-extern PHP_FUNCTION(explode);
-extern PHP_FUNCTION(implode);
+PHP_FUNCTION(taint_trim);
+PHP_FUNCTION(taint_rtrim);
+PHP_FUNCTION(taint_ltrim);
 
 typedef void (*php_func)(INTERNAL_FUNCTION_PARAMETERS);
 
