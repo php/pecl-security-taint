@@ -877,7 +877,7 @@ static void php_taint_mcall_check(ZEND_OPCODE_HANDLER_ARGS, zend_op *opline, zen
 		void **p = EG(argument_stack).top_element;
 #endif
 		int arg_count = opline->extended_value;
-		char *class_name = scope->name;
+		char *class_name = (char *)scope->name;
 		uint cname_len = scope->name_length;
 
 		if (!arg_count) {
