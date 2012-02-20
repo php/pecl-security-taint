@@ -276,7 +276,7 @@ static int php_taint_qm_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 
 	TAINT_T(TAINT_RESULT_VAR(opline)).tmp_var = *op1;
 
-	if (IS_TMP_VAR != TAINT_OP1_TYPE(opline)) {
+	if (!((zend_uintptr_t)free_op1.var & 1L)) {
 		zval_copy_ctor(&TAINT_T(TAINT_RESULT_VAR(opline)).tmp_var);
 		if (op1 && IS_STRING == Z_TYPE_P(op1) && PHP_TAINT_POSSIBLE(op1)) {
 			zval *result = &TAINT_T(TAINT_RESULT_VAR(opline)).tmp_var;
