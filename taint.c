@@ -603,12 +603,12 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 			break;
 	}
 
-	SEPARATE_ZVAL_IF_NOT_REF(var_ptr);
-
 	if ((*var_ptr && IS_STRING == Z_TYPE_PP(var_ptr) && PHP_TAINT_POSSIBLE(*var_ptr))
 			|| (op2 && IS_STRING == Z_TYPE_P(op2) && PHP_TAINT_POSSIBLE(op2))) {
 		tainted = 1;
 	}
+
+	SEPARATE_ZVAL_IF_NOT_REF(var_ptr);
 
 	concat_function(*var_ptr, *var_ptr, op2 TSRMLS_CC);
 
