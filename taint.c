@@ -1408,8 +1408,7 @@ PHP_FUNCTION(taint_strval) {
 	int tainted = 0;
 
 	if (ZEND_NUM_ARGS() != 1 || zend_get_parameters_ex(1, &arg) == FAILURE) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only one argument expected");
-		RETURN_FALSE;
+		WRONG_PARAM_COUNT;
 	}
 
 	if (Z_TYPE_PP(arg) == IS_STRING && PHP_TAINT_POSSIBLE(*arg)) {
@@ -1520,7 +1519,6 @@ PHP_FUNCTION(taint_explode) {
 	int tainted = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &separator, &str, &limit) == FAILURE) {
-		ZVAL_FALSE(return_value);
 		WRONG_PARAM_COUNT;
 	}
 
@@ -1587,7 +1585,7 @@ PHP_FUNCTION(taint_trim)
 	int tainted = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &str, &charlist) == FAILURE) {
-		return;
+		WRONG_PARAM_COUNT;
 	}
 
 	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
@@ -1611,7 +1609,7 @@ PHP_FUNCTION(taint_rtrim)
 	int tainted = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &str, &charlist) == FAILURE) {
-		return;
+		WRONG_PARAM_COUNT;
 	}
 
 	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
@@ -1635,7 +1633,7 @@ PHP_FUNCTION(taint_ltrim)
 	int tainted = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|z", &str, &charlist) == FAILURE) {
-		return;
+		WRONG_PARAM_COUNT;
 	}
 
 	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
