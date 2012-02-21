@@ -585,7 +585,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 #endif
 
 	if (!var_ptr) {
-		zend_error_noreturn(E_ERROR, "Cannot use assign-op operators with overloaded objects nor string offsets");
+		php_error(E_ERROR, "Cannot use assign-op operators with overloaded objects nor string offsets");
 	}
 
 	switch(TAINT_OP2_TYPE(opline)) {
