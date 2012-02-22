@@ -101,11 +101,6 @@ static void php_taint_mark_strings(zval *symbol_table TSRMLS_DC) /* {{{ */ {
 	zval **ppzval;
 	HashTable *ht = Z_ARRVAL_P(symbol_table);
 
-	if (++ht->nApplyCount > 1) {
-		ht->nApplyCount--;
-		return;
-	}
-
 	for(zend_hash_internal_pointer_reset(ht);
 			zend_hash_has_more_elements(ht) == SUCCESS;
 			zend_hash_move_forward(ht)) {
@@ -221,7 +216,8 @@ static zval **php_taint_get_zval_ptr_ptr_cv(znode *node, temp_variable *Ts, int 
 
 	if (!*ptr) {
 		zend_compiled_variable *cv = &TAINT_CV_DEF_OF(node->u.var);
-		if (zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len+1, cv->hash_value, (void **) ptr )==FAILURE) {
+		if (!EG(active_symbol_table) 
+				|| zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len+1, cv->hash_value, (void **) ptr )==FAILURE) {
 			switch (type) {
 				case BP_VAR_R:
 				case BP_VAR_UNSET:
@@ -342,7 +338,8 @@ static zval ** php_taint_get_zval_ptr_ptr_cv(zend_uint var, int type TSRMLS_DC) 
 
 	if (UNEXPECTED(*ptr == NULL)) {
 		zend_compiled_variable *cv = &TAINT_CV_DEF_OF(var);
-		if (zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len+1, cv->hash_value, (void **) ptr )==FAILURE) {
+		if (!EG(active_symbol_table) 
+				|| zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len+1, cv->hash_value, (void **) ptr )==FAILURE) {
 			switch (type) {
 				case BP_VAR_R:
 				case BP_VAR_UNSET:
@@ -585,7 +582,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 #endif
 
 	if (!var_ptr) {
-		php_error(E_ERROR, "Cannot use assign-op operators with overloaded objects nor string offsets");
+		return ZEND_USER_OPCODE_DISPATCH;
 	}
 
 	switch(TAINT_OP2_TYPE(opline)) {
