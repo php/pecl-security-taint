@@ -3,7 +3,10 @@
  <name>taint</name>
  <channel>pecl.php.net</channel>
  <summary>XSS code sniffer</summary>
- <description>extension used for detecting XSS codes(tainted string)</description>
+ <description>
+  An extension used for detecting XSS codes(tainted string), 
+  And also can be used to spot sql injection vulnerabilities, shell inject, etc.
+ </description>
  <lead>
   <name>Xinchen Hui</name>
   <user>laruence</user>
