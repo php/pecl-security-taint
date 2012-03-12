@@ -416,7 +416,7 @@ static int php_taint_echo_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		if (ZEND_ECHO == opline->opcode) {
 			php_taint_error("function.echo" TSRMLS_CC, "Attempt to echo a string that might be tainted");
 		} else {
-			php_taint_error("function.echo" TSRMLS_CC, "Attempt to print a string that might be tainted");
+			php_taint_error("function.print" TSRMLS_CC, "Attempt to print a string that might be tainted");
 		}
 	}
 
