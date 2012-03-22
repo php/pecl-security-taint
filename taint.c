@@ -885,7 +885,9 @@ static void php_taint_mcall_check(ZEND_OPCODE_HANDLER_ARGS, zend_op *opline, zen
 					if (el && IS_STRING == Z_TYPE_P(el) && PHP_TAINT_POSSIBLE(el)) {
 						php_taint_error(NULL TSRMLS_CC, "SQL statement contains data that might be tainted");
 					}
-				} else if (strncmp("escape_string", fname, len) == 0
+				}
+#if 0
+			   	else if (strncmp("escape_string", fname, len) == 0
 						|| strncmp("real_escape_string", fname, len) == 0 ) {
 					zval *el;
 					el = *((zval **) (p - (arg_count)));
@@ -893,6 +895,7 @@ static void php_taint_mcall_check(ZEND_OPCODE_HANDLER_ARGS, zend_op *opline, zen
 						PHP_TAINT_MARK(el, PHP_TAINT_MAGIC_NONE);
 					}
 				}
+#endif
 				break;
 			}
 
@@ -916,13 +919,16 @@ static void php_taint_mcall_check(ZEND_OPCODE_HANDLER_ARGS, zend_op *opline, zen
 					if (el && IS_STRING == Z_TYPE_P(el) && PHP_TAINT_POSSIBLE(el)) {
 						php_taint_error(NULL TSRMLS_CC, "SQL statement contains data that might be tainted");
 					}
-				} else if (strncmp("quote", fname, len) == 0) {
+				}
+#if 0
+			   	else if (strncmp("quote", fname, len) == 0) {
 					zval *el;
 					el = *((zval **) (p - (arg_count)));
 					if (el && IS_STRING == Z_TYPE_P(el) && PHP_TAINT_POSSIBLE(el)) {
 						PHP_TAINT_MARK(el, PHP_TAINT_MAGIC_NONE);
 					}
 				}
+#endif
 				break;
 			}
 		} while (0);
@@ -1065,7 +1071,7 @@ static void php_taint_fcall_check(ZEND_OPCODE_HANDLER_ARGS, zend_op *opline, cha
 				}
 				break;
 			}
-
+#if 0
 			if (strncmp("escapeshellcmd", fname, len) == 0
 					|| strncmp("htmlspecialchars", fname, len) == 0
 					|| strncmp("escapeshellcmd", fname, len) == 0
@@ -1082,6 +1088,7 @@ static void php_taint_fcall_check(ZEND_OPCODE_HANDLER_ARGS, zend_op *opline, cha
 				}
 				break;
 			}
+#endif
 		} while (0);
 	}
 } /* }}} */
