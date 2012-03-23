@@ -1787,7 +1787,8 @@ PHP_FUNCTION(taint_strstr)
 PHP_FUNCTION(taint_substr)
 {
 	zval *str;
-	int start, length, tainted = 0;
+	long start, length;
+    int	tainted = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zl|l", &str, &start, &length) == FAILURE) {
 		return;
