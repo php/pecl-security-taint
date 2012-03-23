@@ -27,6 +27,7 @@
  <notes>
    - Support more functions(strstr, substr, str_replace etc)
    - Fixed Bug that tainted info lost if string is parsed by htmlspecialchars
+   - Trigger warning when doing dim assign concat
  </notes>
  <contents> 
   <dir name="/"> 
