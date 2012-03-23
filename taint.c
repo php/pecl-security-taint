@@ -573,7 +573,41 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	switch (opline->extended_value) {
 		case ZEND_ASSIGN_OBJ:
 		case ZEND_ASSIGN_DIM:
-		    /* @FIXME */
+			{
+		    /* @FIXME */ 
+				zval *value = NULL;
+				zend_free_op free_value;
+				zend_op *op_data = opline + 1;
+
+				switch(TAINT_OP1_TYPE(op_data)) {
+					case IS_TMP_VAR:
+						value = php_taint_get_zval_ptr_tmp(TAINT_OP1_NODE_PTR(op_data), execute_data->Ts, &free_value TSRMLS_CC);
+						break;
+					case IS_VAR:
+						value = php_taint_get_zval_ptr_var(TAINT_OP1_NODE_PTR(op_data), execute_data->Ts, &free_value TSRMLS_CC);
+						break;
+					case IS_CV:
+						{
+							zval **t = TAINT_CV_OF(TAINT_OP1_VAR(op_data));
+							if (t && *t) {
+								value = *t;
+							} else if (EG(active_symbol_table)) {
+								zend_compiled_variable *cv = &TAINT_CV_DEF_OF(TAINT_OP1_VAR(op_data));
+								if (zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len + 1, cv->hash_value, (void **)&t) == SUCCESS) {
+									value = *t;
+								}
+							}
+						}
+						break;
+					case IS_CONST:
+						value = TAINT_OP1_CONSTANT_PTR(op_data);
+						break;
+				}
+
+				if (value && IS_STRING == Z_TYPE_P(value) && PHP_TAINT_POSSIBLE(value)) {
+					php_taint_error(NULL TSRMLS_CC, "Right operand of assign concat(.=) is a tainted string");
+				}
+			}
 			return ZEND_USER_OPCODE_DISPATCH;
 			break;
 		default:
