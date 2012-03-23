@@ -92,6 +92,12 @@ static struct taint_overridden_fucs /* {{{ */ {
 	php_func trim;
 	php_func rtrim;
 	php_func ltrim;
+	php_func strstr;
+	php_func str_pad;
+	php_func str_replace;
+	php_func substr;
+	php_func strtolower;
+	php_func strtoupper;
 } taint_origin_funcs;
 
 #define TAINT_O_FUNC(m) (taint_origin_funcs.m)
@@ -1378,16 +1384,22 @@ static void php_taint_override_func(char *name, uint len, php_func handler, php_
 } /* }}} */
 
 static void php_taint_override_functions(TSRMLS_D) /* {{{ */ {
-	char f_join[]     = "join";
-	char f_trim[]     = "trim";
-	char f_split[]    = "split";
-	char f_rtrim[]    = "rtrim";
-	char f_ltrim[]    = "ltrim";
-	char f_strval[]   = "strval";
-	char f_sprintf[]  = "sprintf";
-	char f_explode[]  = "explode";
-	char f_implode[]  = "implode";
-	char f_vsprintf[] = "vsprintf";
+	char f_join[]        = "join";
+	char f_trim[]        = "trim";
+	char f_split[]       = "split";
+	char f_rtrim[]       = "rtrim";
+	char f_ltrim[]       = "ltrim";
+	char f_strval[]      = "strval";
+	char f_strstr[]      = "strstr";
+	char f_substr[]      = "substr";
+	char f_sprintf[]     = "sprintf";
+	char f_explode[]     = "explode";
+	char f_implode[]     = "implode";
+	char f_str_pad[]     = "str_pad";
+	char f_vsprintf[]    = "vsprintf";
+	char f_str_replace[] = "str_replace";
+	char f_strtolower[] = "strtolower";
+	char f_strtoupper[] = "strtoupper";
 
 	php_taint_override_func(f_strval, sizeof(f_strval), PHP_FN(taint_strval), &TAINT_O_FUNC(strval) TSRMLS_CC);
 	php_taint_override_func(f_sprintf, sizeof(f_sprintf), PHP_FN(taint_sprintf), &TAINT_O_FUNC(sprintf) TSRMLS_CC);
@@ -1399,13 +1411,20 @@ static void php_taint_override_functions(TSRMLS_D) /* {{{ */ {
 	php_taint_override_func(f_trim, sizeof(f_trim), PHP_FN(taint_trim), &TAINT_O_FUNC(trim) TSRMLS_CC);
 	php_taint_override_func(f_rtrim, sizeof(f_rtrim), PHP_FN(taint_rtrim), &TAINT_O_FUNC(rtrim) TSRMLS_CC);
 	php_taint_override_func(f_ltrim, sizeof(f_ltrim), PHP_FN(taint_ltrim), &TAINT_O_FUNC(ltrim) TSRMLS_CC);
+	php_taint_override_func(f_str_replace, sizeof(f_str_replace), PHP_FN(taint_str_replace), &TAINT_O_FUNC(str_replace) TSRMLS_CC);
+	php_taint_override_func(f_str_pad, sizeof(f_str_pad), PHP_FN(taint_str_pad), &TAINT_O_FUNC(str_pad) TSRMLS_CC);
+	php_taint_override_func(f_strstr, sizeof(f_strstr), PHP_FN(taint_strstr), &TAINT_O_FUNC(strstr) TSRMLS_CC);
+	php_taint_override_func(f_strtolower, sizeof(f_strtolower), PHP_FN(taint_strtolower), &TAINT_O_FUNC(strtolower) TSRMLS_CC);
+	php_taint_override_func(f_strtoupper, sizeof(f_strtoupper), PHP_FN(taint_strtoupper), &TAINT_O_FUNC(strtoupper) TSRMLS_CC);
+	php_taint_override_func(f_substr, sizeof(f_substr), PHP_FN(taint_substr), &TAINT_O_FUNC(substr) TSRMLS_CC);
+
 } /* }}} */
 
 #ifdef COMPILE_DL_TAINT
 ZEND_GET_MODULE(taint)
 #endif
 
-/* {{{ proto strval(mixed $value)
+/* {{{ proto string strval(mixed $value)
  */
 PHP_FUNCTION(taint_strval) {
 	zval **arg;
@@ -1428,7 +1447,7 @@ PHP_FUNCTION(taint_strval) {
 }
 /* }}} */
 
-/* {{{ proto sprintf(string $format, ...)
+/* {{{ proto string sprintf(string $format, ...)
  */
 PHP_FUNCTION(taint_sprintf) {
 	zval ***args;
@@ -1465,7 +1484,7 @@ PHP_FUNCTION(taint_sprintf) {
 }
 /* }}} */
 
-/* {{{ proto vsprintf(string $format, ...)
+/* {{{ proto string vsprintf(string $format, ...)
  */
 PHP_FUNCTION(taint_vsprintf) {
 	zval *format, *args;
@@ -1516,7 +1535,7 @@ PHP_FUNCTION(taint_vsprintf) {
 }
 /* }}} */
 
-/* {{{ proto explode(string $separator, string $str[, int $limit])
+/* {{{ proto array explode(string $separator, string $str[, int $limit])
  */
 PHP_FUNCTION(taint_explode) {
 	zval *separator, *str, *limit;
@@ -1538,7 +1557,7 @@ PHP_FUNCTION(taint_explode) {
 }
 /* }}} */
 
- /* {{{ proto implode(string $separator, array $args)
+ /* {{{ proto string implode(string $separator, array $args)
  */
 PHP_FUNCTION(taint_implode) {
 	zval *op1, *op2;
@@ -1581,7 +1600,7 @@ PHP_FUNCTION(taint_implode) {
 }
 /* }}} */
 
-/* {{{ proto bool trim(string $str)
+/* {{{ proto string trim(string $str)
  */
 PHP_FUNCTION(taint_trim)
 {
@@ -1605,7 +1624,7 @@ PHP_FUNCTION(taint_trim)
 }
 /* }}} */
 
-/* {{{ proto bool rtrim(string $str)
+/* {{{ proto string rtrim(string $str)
  */
 PHP_FUNCTION(taint_rtrim)
 {
@@ -1629,7 +1648,7 @@ PHP_FUNCTION(taint_rtrim)
 }
 /* }}} */
 
-/* {{{ proto bool ltrim(string $str)
+/* {{{ proto string ltrim(string $str)
  */
 PHP_FUNCTION(taint_ltrim)
 {
@@ -1646,6 +1665,154 @@ PHP_FUNCTION(taint_ltrim)
 
 	TAINT_O_FUNC(ltrim)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
 
+	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
+		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
+		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
+	}
+}
+/* }}} */
+
+/* {{{ proto string str_replace(mixed $search, mixed $replace, mixed $subject [, int &$count])
+ */
+PHP_FUNCTION(taint_str_replace)
+{
+	zval *str, *from, *len, *repl;
+	int tainted = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzz|z", &str, &repl, &from, &len) == FAILURE) {
+		return;
+	}
+	
+	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
+		tainted = 1;
+	} else if (IS_STRING == Z_TYPE_P(repl) && PHP_TAINT_POSSIBLE(repl)) {
+		tainted = 1;
+	}
+
+	TAINT_O_FUNC(str_replace)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	
+	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
+		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
+		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
+	}
+}
+/* }}} */
+
+/* {{{ proto string str_pad(string $input, int $pad_length[, string $pad_string = " "[, int $pad_type = STR_PAD_RIGHT]])
+ */
+PHP_FUNCTION(taint_str_pad)
+{
+	zval *input, *pad_length, *pad_string = NULL, *pad_type = NULL;
+	int tainted = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|zz", &input, &pad_length, &pad_string, &pad_type) == FAILURE) {
+		return;
+	}
+	
+	if (IS_STRING == Z_TYPE_P(input) && PHP_TAINT_POSSIBLE(input)) {
+		tainted = 1;
+	} else if (pad_string && IS_STRING == Z_TYPE_P(pad_string) && PHP_TAINT_POSSIBLE(pad_string)) {
+		tainted = 1;
+	}
+
+	TAINT_O_FUNC(str_pad)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	
+	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
+		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
+		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
+	}
+}
+/* }}} */
+
+/* {{{ proto string strstr(string $haystack, mixed $needle[, bool $part = false])
+ */
+PHP_FUNCTION(taint_strstr)
+{
+	zval *haystack, *needle, *part;
+	int tainted = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zz|z", &haystack, &needle, &part) == FAILURE) {
+		return;
+	}
+	
+	if (IS_STRING == Z_TYPE_P(haystack) && PHP_TAINT_POSSIBLE(haystack)) {
+		tainted = 1;
+	}
+
+	TAINT_O_FUNC(strstr)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	
+	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
+		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
+		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
+	}
+}
+/* }}} */
+
+/* {{{ proto string substr(string $string, int $start[, int $length])
+ */
+PHP_FUNCTION(taint_substr)
+{
+	zval *str;
+	int start, length, tainted = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zl|l", &str, &start, &length) == FAILURE) {
+		return;
+	}
+	
+	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
+		tainted = 1;
+	}
+
+	TAINT_O_FUNC(substr)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	
+	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
+		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
+		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
+	}
+}
+/* }}} */
+
+/* {{{ proto string strtolower(string $string)
+ */
+PHP_FUNCTION(taint_strtolower)
+{
+	zval *str;
+	int tainted = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &str) == FAILURE) {
+		return;
+	}
+	
+	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
+		tainted = 1;
+	}
+
+	TAINT_O_FUNC(strtolower)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	
+	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
+		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
+		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
+	}
+}
+/* }}} */
+
+/* {{{ proto string strtoupper(string $string)
+ */
+PHP_FUNCTION(taint_strtoupper)
+{
+	zval *str;
+	int tainted = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &str) == FAILURE) {
+		return;
+	}
+	
+	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
+		tainted = 1;
+	}
+
+	TAINT_O_FUNC(strtoupper)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
+	
 	if (tainted && IS_STRING == Z_TYPE_P(return_value) && Z_STRLEN_P(return_value)) {
 		Z_STRVAL_P(return_value) = erealloc(Z_STRVAL_P(return_value), Z_STRLEN_P(return_value) + 1 + PHP_TAINT_MAGIC_LENGTH);
 		PHP_TAINT_MARK(return_value, PHP_TAINT_MAGIC_POSSIBLE);
