@@ -35,13 +35,13 @@ ZEND_DECLARE_MODULE_GLOBALS(taint)
 /* {{{ TAINT_ARG_INFO
  */
 ZEND_BEGIN_ARG_INFO_EX(taint_arginfo, 0, 0, 1)
-	ZEND_ARG_INFO(0, string)
-	ZEND_ARG_INFO(0, ...)
+	ZEND_ARG_INFO(1, string)
+	ZEND_ARG_INFO(1, ...)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(untaint_arginfo, 0, 0, 1)
-	ZEND_ARG_INFO(0, string)
-	ZEND_ARG_INFO(0, ...)
+	ZEND_ARG_INFO(1, string)
+	ZEND_ARG_INFO(1, ...)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(is_tainted_arginfo, 0, 0, 1)
@@ -1893,7 +1893,7 @@ PHP_FUNCTION(taint)
 	}
 
 	for (i=0; i<argc; i++) {
-		if (IS_STRING == Z_TYPE_PP(args[i]) ) {
+		if (IS_STRING == Z_TYPE_PP(args[i]) && !PHP_TAINT_POSSIBLE(*args[i])) {
 #if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION > 3)
 			if (IS_INTERNED(Z_STRVAL_PP(args[i]))) {
 				efree(args);
