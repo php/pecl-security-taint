@@ -13,11 +13,11 @@
   <email>laruence@php.net</email>
   <active>yes</active>
  </lead>
- <date>2012-03-23</date>
- <time>11:18:09</time>
+ <date>2012-04-09</date>
+ <time>22:49:15</time>
  <version>
-  <release>0.5.0</release>
-  <api>0.5.0</api>
+  <release>0.5.1</release>
+  <api>0.5.1</api>
  </version>
  <stability>
   <release>beta</release>
@@ -25,9 +25,7 @@
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes>
-   - Support more functions(strstr, substr, str_replace etc)
-   - Fixed Bug that tainted info lost if string is parsed by htmlspecialchars
-   - Trigger warning when doing dim assign concat
+   - Fixed Bug that segfault with global keyword
  </notes>
  <contents> 
   <dir name="/"> 
@@ -47,6 +45,9 @@
     <file name="007.phpt" role="test" />
     <file name="008.phpt" role="test" />
     <file name="009.phpt" role="test" />
+    <file name="010.phpt" role="test" />
+    <file name="011.phpt" role="test" />
+    <file name="bug61163.phpt" role="test" />
    </dir>
   </dir> 
  </contents> 
@@ -65,6 +66,39 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2012-04-09</date> 
+   <version> 
+    <release>0.5.1</release> 
+    <api>0.5.1</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes> 
+   - Fixed Bug that segfault with global keyword
+   </notes> 
+  </release> 
+
+  <release> 
+   <date>2012-03-23</date> 
+   <version> 
+    <release>0.5.0</release> 
+    <api>0.5.0</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes> 
+   - Support more functions(strstr, substr, str_replace etc)
+   - Fixed Bug that tainted info lost if string is parsed by htmlspecialchars
+   - Trigger warning when doing dim assign concat
+   </notes> 
+  </release> 
+  <release> 
    <date>2012-02-26</date> 
    <version> 
     <release>0.4.1</release> 
@@ -76,11 +110,10 @@
    </stability> 
    <license uri="http://www.php.net/license">PHP License</license> 
    <notes> 
-   - Fixed bug #61163 (Passing and using tainted data in specific way crashes)
-   - Fix build while zend_error_noreturn missed
+    - Fixed bug #61163 (Passing and using tainted data in specific way crashes)
+    - Fix build while zend_error_noreturn missed
    </notes> 
   </release> 
-
   <release> 
    <date>2012-02-20</date> 
    <version> 
