@@ -1257,7 +1257,7 @@ static int php_taint_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		zend_uint refcount = Z_REFCOUNT_PP(op1);
 
 		**op1 = **op2;
-		Z_REFCOUNT_PP(op1) = refcount;
+		Z_SET_REFCOUNT_P(*op1, refcount);
 		Z_SET_ISREF_PP(op1);
 		zval_copy_ctor(*op1);
 		zval_dtor(&garbage);
