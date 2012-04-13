@@ -1267,6 +1267,7 @@ static int php_taint_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		execute_data->opline++;
 		return ZEND_USER_OPCODE_CONTINUE;
 	} else if (PZVAL_IS_REF(*op2) && Z_REFCOUNT_PP(op2) > 1) {
+
 		SEPARATE_ZVAL(op2);
 		Z_STRVAL_PP(op2) = erealloc(Z_STRVAL_PP(op2), Z_STRLEN_PP(op2) + 1 + PHP_TAINT_MAGIC_LENGTH);
 		PHP_TAINT_MARK(*op2, PHP_TAINT_MAGIC_POSSIBLE);
@@ -1332,7 +1333,7 @@ static int php_taint_assign_ref_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 
 	if (!op1 || *op1 != *op2) {
 		SEPARATE_ZVAL(op2);
-		/* TODO: free the op2 if it is a var, no ignore the memleak */
+		/* TODO: free the op2 if it is a var, now ignore the memleak */
 		Z_ADDREF_P(*op2);
 		Z_SET_ISREF_PP(op2);
 		Z_STRVAL_PP(op2) = erealloc(Z_STRVAL_PP(op2), Z_STRLEN_PP(op2) + 1 + PHP_TAINT_MAGIC_LENGTH);
@@ -1373,14 +1374,9 @@ static int php_taint_send_ref_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		return ZEND_USER_OPCODE_DISPATCH;
 	}
 
-	if (IS_CV == TAINT_OP1_TYPE(opline)) {
-#if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 3)
-		/* @TODO: memleak? */
-		Z_ADDREF_P(*op1);
-#endif
-	}
-
 	SEPARATE_ZVAL(op1);
+	Z_SET_REFCOUNT_P(*op1, 2);
+	Z_SET_ISREF_PP(op1);
 	Z_STRVAL_PP(op1) = erealloc(Z_STRVAL_PP(op1), Z_STRLEN_PP(op1) + 1 + PHP_TAINT_MAGIC_LENGTH);
 	PHP_TAINT_MARK(*op1, PHP_TAINT_MAGIC_POSSIBLE);
 
@@ -1423,14 +1419,9 @@ static int php_taint_send_var_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		return ZEND_USER_OPCODE_DISPATCH;
 	}
 
-	if (IS_CV == TAINT_OP1_TYPE(opline)) {
-#if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 3)
-		/* @TODO: memleak? */
-		Z_ADDREF_P(*op1);
-#endif
-	}
-
 	SEPARATE_ZVAL(op1);
+	Z_SET_REFCOUNT_P(*op1, 2);
+	Z_UNSET_ISREF_PP(op1);
 	Z_STRVAL_PP(op1) = erealloc(Z_STRVAL_PP(op1), Z_STRLEN_PP(op1) + 1 + PHP_TAINT_MAGIC_LENGTH);
 	PHP_TAINT_MARK(*op1, PHP_TAINT_MAGIC_POSSIBLE);
 
