@@ -24,7 +24,8 @@
   <api>beta</api>
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
- <notes>
+ <notes> 
+  - Bug #61816 (Segmentation fault)
  </notes>
  <contents> 
   <dir name="/"> 
