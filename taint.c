@@ -587,7 +587,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		case ZEND_ASSIGN_OBJ:
 		case ZEND_ASSIGN_DIM:
 			{
-		    /* @FIXME */ 
+	     	    /* @FIXME */ 
 				zval *value = NULL;
 				zend_free_op free_value;
 				zend_op *op_data = opline + 1;
@@ -617,8 +617,12 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 						break;
 				}
 
+				if (value && TAINT_OP1_TYPE(op_data) != IS_CV) {
+					Z_ADDREF_P(value);
+				}
+
 				if (value && IS_STRING == Z_TYPE_P(value) && PHP_TAINT_POSSIBLE(value)) {
-					php_taint_error(NULL TSRMLS_CC, "Right operand of assign concat(.=) is a tainted string");
+					php_taint_error(NULL TSRMLS_CC, "Right operand of assign concat(.=) is a tainted string, taint could not trace dim concat result now");
 				}
 			}
 			return ZEND_USER_OPCODE_DISPATCH;
@@ -634,7 +638,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	var_ptr = php_taint_get_zval_ptr_ptr(TAINT_OP1_TYPE(opline), &opline->op1, execute_data->Ts, &free_op1, BP_VAR_RW TSRMLS_CC);
 #endif
 
-	if (!var_ptr) {
+	if (!var_ptr || *var_ptr == EG(error_zval_ptr)) { 
 		return ZEND_USER_OPCODE_DISPATCH;
 	}
 
