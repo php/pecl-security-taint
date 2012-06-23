@@ -16,16 +16,16 @@
  <date>2012-05-08</date>
  <time>16:42:06</time>
  <version>
-  <release>0.5.3</release>
-  <api>0.5.3</api>
+  <release>1.0.0</release>
+  <api>1.0.0</api>
  </version>
  <stability>
-  <release>beta</release>
-  <api>beta</api>
+  <release>stable</release>
+  <api>stable</api>
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes> 
-  - Bug #61816 (Segmentation fault)
+  - Fixed bug #62395 (str_replace重写有误)
  </notes>
  <contents> 
   <dir name="/"> 
@@ -67,7 +67,38 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2012-06-23</date> 
+   <version> 
+    <release>1.0.0</release> 
+    <api>1.0.0</api> 
+   </version> 
+   <stability> 
+    <release>stable</release> 
+    <api>stable</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes> 
+    - Fixed bug #62395 (str_replace重写有误)
+   </notes> 
+  </release> 
+
+  <release> 
    <date>2012-05-08</date> 
+   <version> 
+    <release>0.5.3</release> 
+    <api>0.5.3</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes> 
+    - Bug #61816 (Segmentation fault)
+   </notes> 
+  </release> 
+  <release> 
+   <date>2012-04-12</date> 
    <version> 
     <release>0.5.2</release> 
     <api>0.5.2</api> 
@@ -81,7 +112,6 @@
    - Fixed Bug that segfault with global keyword
    </notes> 
   </release> 
-
   <release> 
    <date>2012-04-11</date> 
    <version> 
