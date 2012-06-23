@@ -1762,9 +1762,9 @@ PHP_FUNCTION(taint_str_replace)
 		return;
 	}
 	
-	if (IS_STRING == Z_TYPE_P(str) && PHP_TAINT_POSSIBLE(str)) {
+	if (IS_STRING == Z_TYPE_P(repl) && PHP_TAINT_POSSIBLE(repl)) {
 		tainted = 1;
-	} else if (IS_STRING == Z_TYPE_P(repl) && PHP_TAINT_POSSIBLE(repl)) {
+	} else if (IS_STRING == Z_TYPE_P(from) && PHP_TAINT_POSSIBLE(from)) {
 		tainted = 1;
 	}
 
