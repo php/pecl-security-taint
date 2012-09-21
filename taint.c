@@ -136,7 +136,7 @@ static void php_taint_mark_strings(zval *symbol_table TSRMLS_DC) /* {{{ */ {
 	}
 } /* }}} */
 
-static void taint_pzval_unlock_func(zval *z, zend_free_op *should_free, int unref) /* {{{ */ {
+static void taint_pzval_unlock_func(zval *z, taint_free_op *should_free, int unref) /* {{{ */ {
     if (!Z_DELREF_P(z)) {
         Z_SET_REFCOUNT_P(z, 1);
         Z_UNSET_ISREF_P(z);
@@ -144,6 +144,7 @@ static void taint_pzval_unlock_func(zval *z, zend_free_op *should_free, int unre
     } else {
         should_free->var = 0;
         if (unref && Z_ISREF_P(z) && Z_REFCOUNT_P(z) == 1) {
+			should_free->is_ref = 1;
 			Z_UNSET_ISREF_P(z);
         }
     }
@@ -156,6 +157,15 @@ static void taint_pzval_unlock_free_func(zval *z) /* {{{ */ {
     }
 } /* }}} */
 
+static void taint_pzval_lock_func(zval *z, taint_free_op *should_free) /* {{{ */ {
+	if (should_free->type == IS_VAR) {
+		Z_ADDREF_P(z);
+		if (should_free->var && should_free->is_ref) {
+			Z_SET_ISREF_P(z, 1);
+		}
+	}
+} /* }}} */
+
 static void php_taint_get_cv_address(zend_compiled_variable *cv, zval ***ptr, temp_variable *Ts TSRMLS_DC) /* {{{ */ {
 	zval *new_zval = &EG(uninitialized_zval);
 
@@ -165,7 +175,7 @@ static void php_taint_get_cv_address(zend_compiled_variable *cv, zval ***ptr, te
 /* }}} */
 
 #if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 4)
-static zval * php_taint_get_zval_ptr_var(znode *node, temp_variable *Ts, zend_free_op *should_free TSRMLS_DC) /* {{{ */ {
+static zval * php_taint_get_zval_ptr_var(znode *node, temp_variable *Ts, taint_free_op *should_free TSRMLS_DC) /* {{{ */ {
     zval *ptr = TAINT_TS(node->u.var).var.ptr;
     if (ptr) {
         TAINT_PZVAL_UNLOCK(ptr, should_free);
@@ -215,11 +225,11 @@ static zval * php_taint_get_zval_ptr_cv(znode *node, temp_variable *Ts TSRMLS_DC
 	return **ptr;
 } /* }}} */
 
-static zval * php_taint_get_zval_ptr_tmp(znode *node, temp_variable *Ts, zend_free_op *should_free TSRMLS_DC) /* {{{ */ {
+static zval * php_taint_get_zval_ptr_tmp(znode *node, temp_variable *Ts, taint_free_op *should_free TSRMLS_DC) /* {{{ */ {
 	return should_free->var = &TAINT_TS(node->u.var).tmp_var;
 } /* }}} */
 
-static zval ** php_taint_get_zval_ptr_ptr_var(znode *node, temp_variable *Ts, zend_free_op *should_free TSRMLS_DC) /* {{{ */ {
+static zval ** php_taint_get_zval_ptr_ptr_var(znode *node, temp_variable *Ts, taint_free_op *should_free TSRMLS_DC) /* {{{ */ {
 	zval** ptr_ptr = TAINT_TS(node->u.var).var.ptr_ptr;
 
 	if (ptr_ptr) {
@@ -258,7 +268,8 @@ static zval **php_taint_get_zval_ptr_ptr_cv(znode *node, temp_variable *Ts, int 
 	return *ptr;
 } /* }}} */
 
-static zval **php_taint_get_zval_ptr_ptr(znode *node, temp_variable *Ts, zend_free_op *should_free, int type TSRMLS_DC) /* {{{ */ {
+static zval **php_taint_get_zval_ptr_ptr(znode *node, temp_variable *Ts, taint_free_op *should_free, int type TSRMLS_DC) /* {{{ */ {
+	should_free->type = node->op_type;
 	if (node->op_type == IS_CV) {
 		should_free->var = 0;
 		return php_taint_get_zval_ptr_ptr_cv(node, Ts, type TSRMLS_CC);
@@ -273,7 +284,7 @@ static zval **php_taint_get_zval_ptr_ptr(znode *node, temp_variable *Ts, zend_fr
 static int php_taint_qm_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL;
-	zend_free_op free_op1 = {0};
+	taint_free_op free_op1 = {0};
 
 	switch(TAINT_OP1_TYPE(opline)) {
 		case IS_TMP_VAR:
@@ -318,7 +329,7 @@ static int php_taint_qm_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 } /* }}} */
 
 #else
-static zval * php_taint_get_zval_ptr_var(zend_uint var, const temp_variable *Ts, zend_free_op *should_free TSRMLS_DC) /* {{{ */ {
+static zval * php_taint_get_zval_ptr_var(zend_uint var, const temp_variable *Ts, taint_free_op *should_free TSRMLS_DC) /* {{{ */ {
 	zval *ptr = TAINT_TS(var).var.ptr;
 	TAINT_PZVAL_UNLOCK(ptr, should_free);
 	return ptr;
@@ -337,11 +348,11 @@ static zval * php_taint_get_zval_ptr_cv(zend_uint var, int type TSRMLS_DC) /* {{
 	return **ptr;
 } /* }}} */
 
-static zval * php_taint_get_zval_ptr_tmp(zend_uint var, const temp_variable *Ts, zend_free_op *should_free TSRMLS_DC) /* {{{ */ {
+static zval * php_taint_get_zval_ptr_tmp(zend_uint var, const temp_variable *Ts, taint_free_op *should_free TSRMLS_DC) /* {{{ */ {
 	return should_free->var = &TAINT_TS(var).tmp_var;
 } /* }}} */
 
-static zval ** php_taint_get_zval_ptr_ptr_var(zend_uint var, const temp_variable *Ts, zend_free_op *should_free TSRMLS_DC)/* {{{ */ {
+static zval ** php_taint_get_zval_ptr_ptr_var(zend_uint var, const temp_variable *Ts, taint_free_op *should_free TSRMLS_DC)/* {{{ */ {
 	zval** ptr_ptr = TAINT_TS(var).var.ptr_ptr;
 
 	if (EXPECTED(ptr_ptr != NULL)) {
@@ -386,7 +397,8 @@ static zval ** php_taint_get_zval_ptr_ptr_cv(zend_uint var, int type TSRMLS_DC) 
 	return *ptr;
 } /* }}} */
 
-static zval ** php_taint_get_zval_ptr_ptr(int op_type, const znode_op *node, const temp_variable *Ts, zend_free_op *should_free, int type TSRMLS_DC) /* {{{ */ {
+static zval ** php_taint_get_zval_ptr_ptr(int op_type, const znode_op *node, const temp_variable *Ts, taint_free_op *should_free, int type TSRMLS_DC) /* {{{ */ {
+	should_free->var = op_type;
 	if (op_type == IS_CV) {
 		should_free->var = 0;
 		return php_taint_get_zval_ptr_ptr_cv(node->var, type TSRMLS_CC);
@@ -409,7 +421,7 @@ static void php_taint_error(const char *docref TSRMLS_DC, const char *format, ..
 static int php_taint_echo_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL;
-	zend_free_op free_op1;
+	taint_free_op free_op1 = {0};
 
 	switch(TAINT_OP1_TYPE(opline)) {
 		case IS_TMP_VAR:
@@ -446,7 +458,7 @@ static int php_taint_echo_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 static int php_taint_include_or_eval_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL;
-	zend_free_op free_op1;
+	taint_free_op free_op1 = {0};
 
 	switch(TAINT_OP1_TYPE(opline)) {
 		case IS_TMP_VAR:
@@ -501,7 +513,7 @@ static int php_taint_include_or_eval_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */
 static int php_taint_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL, *op2 = NULL, *result;
-	zend_free_op free_op1, free_op2;
+	taint_free_op free_op1 = {0}, free_op2 = {0};
 	uint tainted = 0;
 
 	result = &TAINT_T(TAINT_RESULT_VAR(opline)).tmp_var;
@@ -577,7 +589,7 @@ static int php_taint_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op2 = NULL, **var_ptr = NULL;
-	zend_free_op free_op1, free_op2;
+	taint_free_op free_op1 = {0}, free_op2 = {0};
 	uint tainted = 0;
 
 	if (opline->opcode != ZEND_ASSIGN_CONCAT) {
@@ -590,7 +602,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 			{
 	     	    /* @FIXME */ 
 				zval *value = NULL;
-				zend_free_op free_value;
+				taint_free_op free_value = {0};
 				zend_op *op_data = opline + 1;
 
 				switch(TAINT_OP1_TYPE(op_data)) {
@@ -674,7 +686,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 
 	if (TAINT_RETURN_VALUE_USED(opline)) {
 		TAINT_T(TAINT_RESULT_VAR(opline)).var.ptr_ptr = var_ptr;
-		TAINT_PZVAL_LOCK(*var_ptr);
+		Z_ADDREF_PP(var_ptr);
 		TAINT_AI_USE_PTR(TAINT_T(TAINT_RESULT_VAR(opline)).var);
 	}
 
@@ -701,7 +713,7 @@ static int php_taint_assign_concat_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 static int php_taint_add_string_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL, *result;
-	zend_free_op free_op1;
+	taint_free_op free_op1 = {0};
 	uint tainted = 0;
 
 	result = &TAINT_T(TAINT_RESULT_VAR(opline)).tmp_var;
@@ -758,7 +770,7 @@ static int php_taint_add_string_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 static int php_taint_add_char_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL, *result;
-	zend_free_op free_op1;
+	taint_free_op free_op1 = {0};
 	uint tainted = 0;
 
 	result = &TAINT_T(TAINT_RESULT_VAR(opline)).tmp_var;
@@ -815,7 +827,7 @@ static int php_taint_add_char_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 static int php_taint_add_var_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval *op1 = NULL, *op2 = NULL, *result;
-	zend_free_op free_op1, free_op2;
+	taint_free_op free_op1 = {0}, free_op2 = {0};
 	uint tainted = 0;
 	zval var_copy;
 	int use_copy = 0;
@@ -1215,6 +1227,9 @@ static int php_taint_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	zval **op1 = NULL, **op2 = NULL;
 
 	switch (TAINT_OP2_TYPE(opline)) {
+		case IS_VAR:
+			op2 = TAINT_T(TAINT_OP2_VAR(opline)).var.ptr_ptr;
+			break;
 		case IS_CV:
 			{
 				zval **t = TAINT_CV_OF(TAINT_OP2_VAR(opline));
@@ -1272,7 +1287,6 @@ static int php_taint_assign_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 		execute_data->opline++;
 		return ZEND_USER_OPCODE_CONTINUE;
 	} else if (PZVAL_IS_REF(*op2) && Z_REFCOUNT_PP(op2) > 1) {
-
 		SEPARATE_ZVAL(op2);
 		Z_STRVAL_PP(op2) = erealloc(Z_STRVAL_PP(op2), Z_STRLEN_PP(op2) + 1 + PHP_TAINT_MAGIC_LENGTH);
 		PHP_TAINT_MARK(*op2, PHP_TAINT_MAGIC_POSSIBLE);
@@ -1351,86 +1365,86 @@ static int php_taint_assign_ref_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 static int php_taint_send_ref_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval **op1 = NULL;
+	taint_free_op free_op1 = {0};
 
-	switch (TAINT_OP1_TYPE(opline)) {
-		case IS_VAR:
-			op1 = TAINT_T(TAINT_OP1_VAR(opline)).var.ptr_ptr;
-			break;
-		case IS_CV:
-			{
-				zval **t = TAINT_CV_OF(TAINT_OP1_VAR(opline));
-				if (t && *t) {
-					op1 = t;
-				} else if (EG(active_symbol_table)) {
-					zend_compiled_variable *cv = &TAINT_CV_DEF_OF(TAINT_OP1_VAR(opline));
-					if (zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len + 1, cv->hash_value, (void **)&t) == SUCCESS) {
-						op1 = t;
-					}
-				}
-			}
-			break;
-		default:
-			return ZEND_USER_OPCODE_DISPATCH;
-			break;
-	}
-
-	if (!op1 || *op1 == &EG(error_zval) || IS_STRING != Z_TYPE_PP(op1) 
-			 || PZVAL_IS_REF(*op1) || Z_REFCOUNT_PP(op1) < 2 || !Z_STRLEN_PP(op1) || !PHP_TAINT_POSSIBLE(*op1)) {
+	if (execute_data->function_state.function->type == ZEND_INTERNAL_FUNCTION
+			&& !ARG_SHOULD_BE_SENT_BY_REF(execute_data->fbc, TAINT_OP_LINENUM(opline->op2))) {
 		return ZEND_USER_OPCODE_DISPATCH;
 	}
 
-	SEPARATE_ZVAL(op1);
-	Z_SET_REFCOUNT_P(*op1, 2);
-	Z_SET_ISREF_PP(op1);
+#if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 4)
+	op1 = php_taint_get_zval_ptr_ptr(&opline->op1, execute_data->Ts, &free_op1, BP_VAR_W TSRMLS_CC);
+#else
+	op1 = php_taint_get_zval_ptr_ptr(TAINT_OP1_TYPE(opline), &opline->op1, execute_data->Ts, &free_op1, BP_VAR_W TSRMLS_CC);
+#endif
+
+	if (!op1 || *op1 == &EG(error_zval) || IS_STRING != Z_TYPE_PP(op1) 
+			 || PZVAL_IS_REF(*op1) || Z_REFCOUNT_PP(op1) < 2 || !Z_STRLEN_PP(op1) || !PHP_TAINT_POSSIBLE(*op1)) {
+		TAINT_PZVAL_LOCK(*op1, &free_op1);
+		return ZEND_USER_OPCODE_DISPATCH;
+	}
+
+	SEPARATE_ZVAL_TO_MAKE_IS_REF(op1);
+	(*op1)->refcount++;
 	Z_STRVAL_PP(op1) = erealloc(Z_STRVAL_PP(op1), Z_STRLEN_PP(op1) + 1 + PHP_TAINT_MAGIC_LENGTH);
 	PHP_TAINT_MARK(*op1, PHP_TAINT_MAGIC_POSSIBLE);
+	zend_ptr_stack_push(&EG(argument_stack), *op1);
 
-	return ZEND_USER_OPCODE_DISPATCH;
+	switch(TAINT_OP1_TYPE(opline)) {
+		case IS_VAR:
+			if (free_op1.var) {
+				zval_ptr_dtor(&free_op1.var);
+			}
+			break;
+	}
+
+	execute_data->opline++;
+	return ZEND_USER_OPCODE_CONTINUE;
 } /* }}} */
 
 static int php_taint_send_var_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
     zend_op *opline = execute_data->opline;
 	zval **op1 = NULL;
+	taint_free_op free_op1 = {0};
+	zval *varptr;
 
 	if ((opline->extended_value == ZEND_DO_FCALL_BY_NAME)
 			&& ARG_SHOULD_BE_SENT_BY_REF(execute_data->fbc, TAINT_OP_LINENUM(opline->op2))) {
 		return php_taint_send_ref_handler(ZEND_OPCODE_HANDLER_ARGS_PASSTHRU);
 	}
 
-	switch (TAINT_OP1_TYPE(opline)) {
-		case IS_VAR:
-			op1 = TAINT_T(TAINT_OP1_VAR(opline)).var.ptr_ptr;
-			break;
-		case IS_CV:
-			{
-				zval **t = TAINT_CV_OF(TAINT_OP1_VAR(opline));
-				if (t && *t) {
-					op1 = t;
-				} else if (EG(active_symbol_table)) {
-					zend_compiled_variable *cv = &TAINT_CV_DEF_OF(TAINT_OP1_VAR(opline));
-					if (zend_hash_quick_find(EG(active_symbol_table), cv->name, cv->name_len + 1, cv->hash_value, (void **)&t) == SUCCESS) {
-						op1 = t;
-					}
-				}
-			}
-			break;
-		default:
-			return ZEND_USER_OPCODE_DISPATCH;
-			break;
-	}
+#if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 4)
+	op1 = php_taint_get_zval_ptr_ptr(&opline->op1, execute_data->Ts, &free_op1, BP_VAR_W TSRMLS_CC);
+#else
+	op1 = php_taint_get_zval_ptr_ptr(TAINT_OP1_TYPE(opline), &opline->op1, execute_data->Ts, &free_op1, BP_VAR_W TSRMLS_CC);
+#endif
 
-	if (!op1 || *op1 == &EG(error_zval) || IS_STRING != Z_TYPE_PP(op1) 
+	if (!op1 || *op1 == &EG(error_zval) || *op1 == &EG(uninitialized_zval) || IS_STRING != Z_TYPE_PP(op1) 
 			|| !PZVAL_IS_REF(*op1) || Z_REFCOUNT_PP(op1) < 2 || !Z_STRLEN_PP(op1) || !PHP_TAINT_POSSIBLE(*op1)) {
+		TAINT_PZVAL_LOCK(*op1, &free_op1);
 		return ZEND_USER_OPCODE_DISPATCH;
 	}
 
-	SEPARATE_ZVAL(op1);
-	Z_SET_REFCOUNT_P(*op1, 2);
-	Z_UNSET_ISREF_PP(op1);
-	Z_STRVAL_PP(op1) = erealloc(Z_STRVAL_PP(op1), Z_STRLEN_PP(op1) + 1 + PHP_TAINT_MAGIC_LENGTH);
-	PHP_TAINT_MARK(*op1, PHP_TAINT_MAGIC_POSSIBLE);
+	MAKE_STD_ZVAL(varptr);
+    *varptr = **op1;
+	Z_SET_REFCOUNT_P(varptr, 0);
+	zval_copy_ctor(varptr);
+	Z_STRVAL_P(varptr) = erealloc(Z_STRVAL_P(varptr), Z_STRLEN_P(varptr) + 1 + PHP_TAINT_MAGIC_LENGTH);
+	PHP_TAINT_MARK(varptr, PHP_TAINT_MAGIC_POSSIBLE);
 
-	return ZEND_USER_OPCODE_DISPATCH;
+	Z_ADDREF_P(varptr);
+	zend_ptr_stack_push(&EG(argument_stack), varptr);
+
+	switch(TAINT_OP1_TYPE(opline)) {
+		case IS_VAR:
+			if (free_op1.var) {
+				zval_ptr_dtor(&free_op1.var);
+			}
+			break;
+	}
+
+	execute_data->opline++;
+	return ZEND_USER_OPCODE_CONTINUE;
 } /* }}} */
 
 static void php_taint_register_handlers(TSRMLS_D) /* {{{ */ {
@@ -1447,7 +1461,7 @@ static void php_taint_register_handlers(TSRMLS_D) /* {{{ */ {
 	zend_set_user_opcode_handler(ZEND_ASSIGN_REF, php_taint_assign_ref_handler);
 	zend_set_user_opcode_handler(ZEND_ASSIGN, php_taint_assign_handler);
 	zend_set_user_opcode_handler(ZEND_SEND_VAR, php_taint_send_var_handler);
-	zend_set_user_opcode_handler(ZEND_SEND_REF, php_taint_send_ref_handler);
+    zend_set_user_opcode_handler(ZEND_SEND_REF, php_taint_send_ref_handler);
 #if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 4)
 	zend_set_user_opcode_handler(ZEND_QM_ASSIGN, php_taint_qm_assign_handler);
 #endif

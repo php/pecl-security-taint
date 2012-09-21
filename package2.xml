@@ -25,6 +25,7 @@
  </stability>
  <license uri="http://www.php.net/license">PHP</license>
  <notes> 
+  - Fixed bug #63100 (array_walk_recursive behaves wrongly when taint enabled)
   - Fixed bug #63123 (Hash pointer should be reset at the end of function:php_taint_mark_strings). (274611049 at qq dot com)
  </notes>
  <contents> 

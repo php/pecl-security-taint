@@ -82,7 +82,7 @@ extern zend_module_entry taint_module_entry;
 #define TAINT_T(offset) (*(temp_variable *)((char *) execute_data->Ts + offset))
 #define TAINT_TS(offset) (*(temp_variable *)((char *)Ts + offset))
 #define TAINT_CV(i)     (EG(current_execute_data)->CVs[i])
-#define TAINT_PZVAL_LOCK(z) Z_ADDREF_P(z);
+#define TAINT_PZVAL_LOCK(z, f) taint_pzval_lock_func(z, f);
 #define TAINT_PZVAL_UNLOCK(z, f) taint_pzval_unlock_func(z, f, 1)
 #define TAINT_PZVAL_UNLOCK_FREE(z) taint_pzval_unlock_free_func(z)
 #define TAINT_CV_OF(i)     (EG(current_execute_data)->CVs[i])
@@ -107,6 +107,12 @@ extern zend_module_entry taint_module_entry;
 #  define Z_UNSET_ISREF_P(pz) (pz)->is_ref = 0 
 #  define Z_ISREF_P(pz)       (pz)->is_ref
 #endif
+
+typedef struct  _taint_free_op {
+	zval* var;
+	int   is_ref;
+	int   type;
+} taint_free_op;
 
 PHP_MINIT_FUNCTION(taint);
 PHP_MSHUTDOWN_FUNCTION(taint);
