@@ -1378,7 +1378,11 @@ static int php_taint_send_ref_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	op1 = php_taint_get_zval_ptr_ptr(TAINT_OP1_TYPE(opline), &opline->op1, execute_data->Ts, &free_op1, BP_VAR_W TSRMLS_CC);
 #endif
 
-	if (!op1 || *op1 == &EG(error_zval) || IS_STRING != Z_TYPE_PP(op1) 
+	if (!op1 || *op1 == &EG(error_zval)) {
+		return ZEND_USER_OPCODE_DISPATCH;
+	}
+
+	if (IS_STRING != Z_TYPE_PP(op1) 
 			 || PZVAL_IS_REF(*op1) || Z_REFCOUNT_PP(op1) < 2 || !Z_STRLEN_PP(op1) || !PHP_TAINT_POSSIBLE(*op1)) {
 		TAINT_PZVAL_LOCK(*op1, &free_op1);
 		return ZEND_USER_OPCODE_DISPATCH;
@@ -1419,7 +1423,11 @@ static int php_taint_send_var_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	op1 = php_taint_get_zval_ptr_ptr(TAINT_OP1_TYPE(opline), &opline->op1, execute_data->Ts, &free_op1, BP_VAR_W TSRMLS_CC);
 #endif
 
-	if (!op1 || *op1 == &EG(error_zval) || *op1 == &EG(uninitialized_zval) || IS_STRING != Z_TYPE_PP(op1) 
+	if (!op1 || *op1 == &EG(error_zval) || *op1 == &EG(uninitialized_zval)) {
+		return ZEND_USER_OPCODE_DISPATCH;
+	}
+
+	if (IS_STRING != Z_TYPE_PP(op1) 
 			|| !PZVAL_IS_REF(*op1) || Z_REFCOUNT_PP(op1) < 2 || !Z_STRLEN_PP(op1) || !PHP_TAINT_POSSIBLE(*op1)) {
 		TAINT_PZVAL_LOCK(*op1, &free_op1);
 		return ZEND_USER_OPCODE_DISPATCH;
