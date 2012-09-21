@@ -119,11 +119,12 @@ static struct taint_overridden_fucs /* {{{ */ {
 static void php_taint_mark_strings(zval *symbol_table TSRMLS_DC) /* {{{ */ {
 	zval **ppzval;
 	HashTable *ht = Z_ARRVAL_P(symbol_table);
+	HashPosition pos = {0};
 
-	for(zend_hash_internal_pointer_reset(ht);
-			zend_hash_has_more_elements(ht) == SUCCESS;
-			zend_hash_move_forward(ht)) {
-		if (zend_hash_get_current_data(ht, (void**)&ppzval) == FAILURE) {
+	for(zend_hash_internal_pointer_reset_ex(ht, &pos);
+			zend_hash_has_more_elements_ex(ht, &pos) == SUCCESS;
+			zend_hash_move_forward_ex(ht, &pos)) {
+		if (zend_hash_get_current_data_ex(ht, (void**)&ppzval, &pos) == FAILURE) {
 			continue;
 		}
         if (Z_TYPE_PP(ppzval) == IS_ARRAY) {
