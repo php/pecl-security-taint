@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | PHP Version 5                                                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2010 The PHP Group                                |
+  | Copyright (c) 1997-2012 The PHP Group                                |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -398,7 +398,7 @@ static zval ** php_taint_get_zval_ptr_ptr_cv(zend_uint var, int type TSRMLS_DC) 
 } /* }}} */
 
 static zval ** php_taint_get_zval_ptr_ptr(int op_type, const znode_op *node, const temp_variable *Ts, taint_free_op *should_free, int type TSRMLS_DC) /* {{{ */ {
-	should_free->var = op_type;
+	should_free->type = op_type;
 	if (op_type == IS_CV) {
 		should_free->var = 0;
 		return php_taint_get_zval_ptr_ptr_cv(node->var, type TSRMLS_CC);
@@ -1389,10 +1389,10 @@ static int php_taint_send_ref_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	}
 
 	SEPARATE_ZVAL_TO_MAKE_IS_REF(op1);
-	(*op1)->refcount++;
+	Z_ADDREF_P(*op1);
 	Z_STRVAL_PP(op1) = erealloc(Z_STRVAL_PP(op1), Z_STRLEN_PP(op1) + 1 + PHP_TAINT_MAGIC_LENGTH);
 	PHP_TAINT_MARK(*op1, PHP_TAINT_MAGIC_POSSIBLE);
-	zend_ptr_stack_push(&EG(argument_stack), *op1);
+	TAINT_ARG_PUSH(*op1);
 
 	switch(TAINT_OP1_TYPE(opline)) {
 		case IS_VAR:
@@ -1441,7 +1441,7 @@ static int php_taint_send_var_handler(ZEND_OPCODE_HANDLER_ARGS) /* {{{ */ {
 	PHP_TAINT_MARK(varptr, PHP_TAINT_MAGIC_POSSIBLE);
 
 	Z_ADDREF_P(varptr);
-	zend_ptr_stack_push(&EG(argument_stack), varptr);
+	TAINT_ARG_PUSH(varptr);
 
 	switch(TAINT_OP1_TYPE(opline)) {
 		case IS_VAR:
