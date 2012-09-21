@@ -161,7 +161,7 @@ static void taint_pzval_lock_func(zval *z, taint_free_op *should_free) /* {{{ */
 	if (should_free->type == IS_VAR) {
 		Z_ADDREF_P(z);
 		if (should_free->var && should_free->is_ref) {
-			Z_SET_ISREF_P(z, 1);
+			Z_SET_ISREF_P(z);
 		}
 	}
 } /* }}} */
