@@ -34,7 +34,7 @@ extern zend_module_entry taint_module_entry;
 #include "TSRM.h"
 #endif
 
-#define PHP_TAINT_VERSION "1.1.1-dev"
+#define PHP_TAINT_VERSION "1.2.0"
 
 #define PHP_TAINT_MAGIC_LENGTH   sizeof(unsigned)
 #define PHP_TAINT_MAGIC_NONE     0x00000000
@@ -54,6 +54,9 @@ extern zend_module_entry taint_module_entry;
 #  define TAINT_GET_ZVAL_PTR_CV_2ND_ARG(t) (execute_data->Ts)
 #  define TAINT_RETURN_VALUE_USED(n) (!((&(n)->result)->u.EA.type & EXT_TYPE_UNUSED))
 #  define TAINT_OP_LINENUM(n)       ((n).u.opline_num)
+#  define TAINT_AI_SET_PTR(ai, val)		\
+	(ai).ptr = (val);					\
+	(ai).ptr_ptr = &((ai).ptr);
 #else
 #  define TAINT_OP1_TYPE(n)         ((n)->op1_type)
 #  define TAINT_OP2_TYPE(n)         ((n)->op2_type)
@@ -67,6 +70,11 @@ extern zend_module_entry taint_module_entry;
 #  define TAINT_GET_ZVAL_PTR_CV_2ND_ARG(t) (t)
 #  define TAINT_RETURN_VALUE_USED(n) (!((n)->result_type & EXT_TYPE_UNUSED))
 #  define TAINT_OP_LINENUM(n)       ((n).opline_num)
+#  define TAINT_AI_SET_PTR(t, val) do {		\
+		temp_variable *__t = (t);			\
+		__t->var.ptr = (val);				\
+		__t->var.ptr_ptr = &__t->var.ptr;	\
+	} while (0)
 #endif
 
 #if (PHP_MAJOR_VERSION == 5) && (PHP_MINOR_VERSION < 3) 
@@ -93,12 +101,25 @@ extern zend_module_entry taint_module_entry;
 #define TAINT_PZVAL_UNLOCK_FREE(z) taint_pzval_unlock_free_func(z)
 #define TAINT_CV_OF(i)     (EG(current_execute_data)->CVs[i])
 #define TAINT_CV_DEF_OF(i) (EG(active_op_array)->vars[i])
+#define TAINT_TMP_FREE(z) (zval*)(((zend_uintptr_t)(z)) | 1L)
 #define TAINT_AI_USE_PTR(ai) \
 	if ((ai).ptr_ptr) { \
 		(ai).ptr = *((ai).ptr_ptr); \
 		(ai).ptr_ptr = &((ai).ptr); \
 	} else { \
 		(ai).ptr = NULL; \
+	}
+#define TAINT_FREE_OP(should_free) \
+	if (should_free.var) { \
+		if ((zend_uintptr_t)should_free.var & 1L) { \
+			zval_dtor((zval*)((zend_uintptr_t)should_free.var & ~1L)); \
+		} else { \
+			zval_ptr_dtor(&should_free.var); \
+		} \
+	}
+#define TAINT_FREE_OP_VAR_PTR(should_free) \
+	if (should_free.var) { \
+		zval_ptr_dtor(&should_free.var); \
 	}
 
 #define PHP_TAINT_MARK(zv, mark) *((unsigned *)(Z_STRVAL_P(zv) + Z_STRLEN_P(zv) + 1)) = (mark)
