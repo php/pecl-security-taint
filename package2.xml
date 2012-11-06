@@ -68,6 +68,22 @@
  <extsrcrelease />
  <changelog> 
   <release> 
+   <date>2012-11-06</date> 
+   <version> 
+    <release>1.2.0</release> 
+    <api>1.2.0</api> 
+   </version> 
+   <stability> 
+    <release>beta</release> 
+    <api>beta</api> 
+   </stability> 
+   <license uri="http://www.php.net/license">PHP License</license> 
+   <notes> 
+    - Support tracing dim concat result (phonpeng@vip.qq.com)
+   </notes> 
+  </release> 
+
+  <release> 
    <date>2012-09-21</date> 
    <version> 
     <release>1.1.0</release> 
@@ -83,7 +99,6 @@
     - Fixed bug #63123 (Hash pointer should be reset at the end of function:php_taint_mark_strings). (274611049 at qq dot com)
    </notes> 
   </release> 
-
   <release> 
    <date>2012-06-23</date> 
    <version> 
